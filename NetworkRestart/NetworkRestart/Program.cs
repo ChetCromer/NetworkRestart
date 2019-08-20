@@ -10,7 +10,8 @@ namespace NetworkRestart
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello world.");
+            Console.WriteLine("Hello world. Press any key to continue.");
+            Console.ReadKey();
         }
     }
 }
