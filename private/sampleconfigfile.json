@@ -1,0 +1,27 @@
+{
+  "Action": {
+    "action": "restart",
+    "installUpdates": "true",
+    "forceAction": "true"
+  },
+  "ServerConfiguration": {
+    "domain": "xxxx.local",
+    "domainAdminUserName": "xxxx@xxxx.com",
+    "domainAdminPassword": "xxxx",
+    "rootOUdistinguishedName": "OU=xxxx,OU=Computers,OU=Production,DC=xxxx,DC=local",
+    "includeSubfolders": "true"
+  },
+  "computersToIgnore": [
+    "xxxx-SPAR0001",
+    "xxxx-SPAR0002"
+  ],
+  "EmailConfiguration": {
+    "Server": "xxx",
+    "Port": 2525,
+    "userName": "xxxx@xxxx.net",
+    "password": "xxxx",
+    "fromAddress": "noreply@xxxx.net",
+    "toAddresses": ["xxxx@xxxx.net","xxxx@xxxx;net"],
+    "sendErrorsOnly": false
+  }
+}
