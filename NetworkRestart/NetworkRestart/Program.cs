@@ -4,6 +4,7 @@ using System.Management;
 using System.IO;
 using System.DirectoryServices;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace NetworkRestart
 {
@@ -11,8 +12,10 @@ namespace NetworkRestart
     {
         static string configFilePath = "C:\\Users\\Carr O'Connor\\Desktop\\ConfigFile-Wyndmoor.json";
         Program program = new Program();
+
         static void Main(string[] args)
         {
+            // Create a writer and open the file:           
             Console.WriteLine("Enter config file path");
             Console.WriteLine(configFilePath);
             RestartComputers();
@@ -67,6 +70,13 @@ namespace NetworkRestart
         {
             ManagementObjectCollection instances;
             List<string> ComputerNames = GetComputers();
+            StreamWriter log;
+            var response = GetJsonData();
+
+            log = File.AppendText("C:\\Users\\Carr O'Connor\\Desktop\\logfile.txt");
+            log.WriteLine("TIMESTAMP :" + DateTime.Now);
+            log.WriteLine("ACTION TAKEN :" + response.Action.action);
+
             foreach (var i in ComputerNames)
             {
                 try
@@ -87,22 +97,29 @@ namespace NetworkRestart
 
                 catch (Exception e)
                 {
-                    Console.WriteLine("did NOT hit computer " + i);
+                    log.WriteLine(i + e);
                     continue;
                 }
 
                 foreach (ManagementObject instance in instances)
                 {
                     Console.WriteLine("hit computer " + instance);
+                    log.WriteLine("Action taken on " + instance);
+
                     object result = instance.InvokeMethod("Reboot", new object[] { });
                     uint returnValue = (uint)result;
 
                     if (returnValue != 0)
                     {
+                        log.WriteLine("Action NOT taken on " + instance);
                         Console.WriteLine("Did not restart");
+                        log.WriteLine();
                     }
                 }
-            }          
+
+                // Close the stream:
+            }
+            log.Close();
         }
     }
 }
