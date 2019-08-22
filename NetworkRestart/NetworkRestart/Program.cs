@@ -9,7 +9,7 @@ namespace NetworkRestart
 {
     public class Program
     {
-        static string configFilePath = "C:\\Users\\carro\\Desktop\\ConfigFile-Wyndmoor.json";
+        static string configFilePath = "C:\\Users\\Carr O'Connor\\Desktop\\ConfigFile-Wyndmoor.json";
         Program program = new Program();
         static void Main(string[] args)
         {
@@ -28,27 +28,12 @@ namespace NetworkRestart
             }
         }
 
-        public static List<string> GetComputersToIgnore()
-        {
-            using (StreamReader r = new StreamReader(configFilePath))
-            {
-                string json = r.ReadToEnd();
-                var response = JsonConvert.DeserializeObject<RootObject>(json);
-                if (response == null) return new List<string>();
-                var computersToIgnore = new List<string>(response.computersToIgnore);
-
-                return computersToIgnore;
-            }
-
-        }
-
         public static List<string> GetComputers()
         {
             var response = GetJsonData();
-
             List<string> ComputerNames = new List<string>();
 
-            DirectoryEntry entry = new DirectoryEntry("LDAP://Wyndmoorals.local");
+            DirectoryEntry entry = new DirectoryEntry("LDAP://Wyndmoorals.local/" + response.ServerConfiguration.rootOUdistinguishedName);
             entry.Username = "c2itadmin@wyndmooralf.com";
             entry.Password = "jJRtMRAHOI@167h";
             DirectorySearcher mySearcher = new DirectorySearcher(entry);
@@ -58,7 +43,6 @@ namespace NetworkRestart
 
             foreach (SearchResult resEnt in mySearcher.FindAll())
             {
-                //"CN=SGSVG007DC"
                 string ComputerName = resEnt.GetDirectoryEntry().Name;
                 if (ComputerName.StartsWith("CN="))
                     ComputerName = ComputerName.Remove(0, "CN=".Length);
@@ -88,34 +72,34 @@ namespace NetworkRestart
                 try
                 {
                     ConnectionOptions options = new ConnectionOptions();
-                    //options.Impersonation = System.Management.ImpersonationLevel.Impersonate;
-                    //options.Authentication = AuthenticationLevel.PacketPrivacy;
-                    //options.Authority = "ntlmdomain:WYNDMOORALS";
-                    //options.Username = "c2itadmin";
-                    //options.Password = "jJRtMRAHOI@167h";
+                    options.Authority = "ntlmdomain:WYNDMOORALS.LOCAL";
+                    options.Username = "c2itadmin";
+                    options.Password = "jJRtMRAHOI@167h";
                     options.EnablePrivileges = true;
 
-                    ManagementScope scope = new ManagementScope("\\\\LAPTOP-IGRADJ10\\root\\CIMV2", options);
+                    ManagementScope scope = new ManagementScope("\\\\" + i + "\\root\\CIMV2", options);
                     scope.Connect();
 
                     ManagementPath osPath = new ManagementPath("Win32_OperatingSystem");
                     ManagementClass os = new ManagementClass(scope, osPath, null);
                     instances = os.GetInstances();
                 }
+
                 catch (Exception e)
                 {
-
-                    throw;
+                    Console.WriteLine("did NOT hit computer " + i);
+                    continue;
                 }
 
                 foreach (ManagementObject instance in instances)
                 {
+                    Console.WriteLine("hit computer " + instance);
                     object result = instance.InvokeMethod("Reboot", new object[] { });
                     uint returnValue = (uint)result;
 
                     if (returnValue != 0)
                     {
-                        throw new Exception();
+                        Console.WriteLine("Did not restart");
                     }
                 }
             }          
