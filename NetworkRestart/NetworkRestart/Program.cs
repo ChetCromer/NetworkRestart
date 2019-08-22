@@ -82,5 +82,49 @@ namespace NetworkRestart
                 return ComputerNames;
             }            
         }
+
+        public static void RestartComputers()
+        {
+            ManagementObjectCollection instances;
+            List<string> ComputerNames = GetComputers();
+            foreach (var i in ComputerNames)
+            {
+                try
+                {
+                    string computerPath = string.Format(@"\\{0}\root\cimv2", i);
+                    ConnectionOptions options = new ConnectionOptions();
+                    options.Impersonation = System.Management.ImpersonationLevel.Impersonate;
+                    //options.EnablePrivilages = true;
+                    //or
+                    //options.Username = "username";
+                    //options.Password = "password";
+                    //options.Authority = "";
+                    ManagementScope scope = new ManagementScope(computerPath, options);
+                    scope.Connect();
+
+                    ManagementPath osPath = new ManagementPath("Win32_OperatingSystem");
+                    ManagementClass os = new ManagementClass(scope, osPath, null);
+                    instances = os.GetInstances();
+
+
+                }
+                catch (Exception)
+                {
+
+                    throw;
+                }
+
+                foreach (ManagementObject instance in instances)
+                {
+                    object result = instance.InvokeMethod("Reboot", new object[] { });
+                    uint returnValue = (uint)result;
+
+                    if (returnValue != 0)
+                    {
+                        throw new Exception();
+                    }
+                }
+            }          
+        }
     }
 }
