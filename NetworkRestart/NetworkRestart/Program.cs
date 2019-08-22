@@ -15,9 +15,7 @@ namespace NetworkRestart
         {
             Console.WriteLine("Enter config file path");
             Console.WriteLine(configFilePath);
-            GetComputersToIgnore();
-            GetJsonData();
-            GetComputers();
+            RestartComputers();
         }
 
         public static RootObject GetJsonData()
@@ -46,41 +44,39 @@ namespace NetworkRestart
 
         public static List<string> GetComputers()
         {
-            using (StreamReader r = new StreamReader(configFilePath))
+            var response = GetJsonData();
+
+            List<string> ComputerNames = new List<string>();
+
+            DirectoryEntry entry = new DirectoryEntry("LDAP://Wyndmoorals.local");
+            entry.Username = "c2itadmin@wyndmooralf.com";
+            entry.Password = "jJRtMRAHOI@167h";
+            DirectorySearcher mySearcher = new DirectorySearcher(entry);
+            mySearcher.Filter = ("(objectClass=computer)");
+            mySearcher.SizeLimit = int.MaxValue;
+            mySearcher.PageSize = int.MaxValue;
+
+            foreach (SearchResult resEnt in mySearcher.FindAll())
             {
-                string json = r.ReadToEnd();
-                var response = JsonConvert.DeserializeObject<RootObject>(json);
+                //"CN=SGSVG007DC"
+                string ComputerName = resEnt.GetDirectoryEntry().Name;
+                if (ComputerName.StartsWith("CN="))
+                    ComputerName = ComputerName.Remove(0, "CN=".Length);
+                ComputerNames.Add(ComputerName);
+            }
 
-                List<string> ComputerNames = new List<string>();
+            mySearcher.Dispose();
+            entry.Dispose();
 
-                DirectoryEntry entry = new DirectoryEntry("LDAP://Wyndmoorals.local");
-                DirectorySearcher mySearcher = new DirectorySearcher(entry);
-                mySearcher.Filter = ("(objectClass=computer)");
-                mySearcher.SizeLimit = int.MaxValue;
-                mySearcher.PageSize = int.MaxValue;
-
-                foreach (SearchResult resEnt in mySearcher.FindAll())
+            foreach (var i in ComputerNames.ToArray())
+            {
+                if (response.computersToIgnore.Contains(i))
                 {
-                    //"CN=SGSVG007DC"
-                    string ComputerName = resEnt.GetDirectoryEntry().Name;
-                    if (ComputerName.StartsWith("CN="))
-                        ComputerName = ComputerName.Remove(0, "CN=".Length);
-                    ComputerNames.Add(ComputerName);
+                    ComputerNames.Remove(i);
                 }
+            }
 
-                mySearcher.Dispose();
-                entry.Dispose();
-
-                foreach (var i in ComputerNames)
-                {
-                    if (response.computersToIgnore.Contains(i))
-                    {
-                        ComputerNames.Remove(i);
-                    }
-                }
-
-                return ComputerNames;
-            }            
+            return ComputerNames;
         }
 
         public static void RestartComputers()
@@ -94,7 +90,7 @@ namespace NetworkRestart
                     string computerPath = string.Format(@"\\{0}\root\cimv2", i);
                     ConnectionOptions options = new ConnectionOptions();
                     options.Impersonation = System.Management.ImpersonationLevel.Impersonate;
-                    //options.EnablePrivilages = true;
+                    options.EnablePrivileges = true;
                     //or
                     //options.Username = "username";
                     //options.Password = "password";
@@ -108,7 +104,7 @@ namespace NetworkRestart
 
 
                 }
-                catch (Exception)
+                catch (Exception e)
                 {
 
                     throw;
