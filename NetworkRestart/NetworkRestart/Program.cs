@@ -87,22 +87,20 @@ namespace NetworkRestart
             {
                 try
                 {
-                    string computerPath = string.Format(@"\\{0}\root\cimv2", i);
                     ConnectionOptions options = new ConnectionOptions();
-                    options.Impersonation = System.Management.ImpersonationLevel.Impersonate;
+                    //options.Impersonation = System.Management.ImpersonationLevel.Impersonate;
+                    //options.Authentication = AuthenticationLevel.PacketPrivacy;
+                    //options.Authority = "ntlmdomain:WYNDMOORALS";
+                    //options.Username = "c2itadmin";
+                    //options.Password = "jJRtMRAHOI@167h";
                     options.EnablePrivileges = true;
-                    //or
-                    //options.Username = "username";
-                    //options.Password = "password";
-                    //options.Authority = "";
-                    ManagementScope scope = new ManagementScope(computerPath, options);
+
+                    ManagementScope scope = new ManagementScope("\\\\LAPTOP-IGRADJ10\\root\\CIMV2", options);
                     scope.Connect();
 
                     ManagementPath osPath = new ManagementPath("Win32_OperatingSystem");
                     ManagementClass os = new ManagementClass(scope, osPath, null);
                     instances = os.GetInstances();
-
-
                 }
                 catch (Exception e)
                 {
