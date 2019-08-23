@@ -14,6 +14,5 @@ namespace NetworkRestart
         public string password { get; set; }
         public string fromAddress { get; set; }
         public List<string> toAddresses { get; set; }
-        public bool sendErrorsOnly { get; set; }
     }
 }

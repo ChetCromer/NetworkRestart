@@ -5,24 +5,35 @@ using System.IO;
 using System.DirectoryServices;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO.IsolatedStorage;
+using System.Net.Mail;
 
 namespace NetworkRestart
 {
     public class Program
     {
-        static string configFilePath = "C:\\Users\\Carr O'Connor\\Desktop\\ConfigFile-Wyndmoor.json";
+        static string configFilePath;
         Program program = new Program();
+        static string fileName = "logfile.txt";
+        static string OUpath;
+        static bool hasError = false;
 
         static void Main(string[] args)
         {
-            // Create a writer and open the file:           
-            Console.WriteLine("Enter config file path");
-            Console.WriteLine(configFilePath);
-            RestartComputers();
+            if (args[0] == null)
+            {
+                Console.WriteLine("Please provide a valid config file.");
+            }
+            else
+            {
+                configFilePath = args[0];
+                ActionComputers();
+            }        
         }
 
         public static RootObject GetJsonData()
         {
+            //Grab data from config file
             using (StreamReader r = new StreamReader(configFilePath))
             {
                 string json = r.ReadToEnd();
@@ -34,12 +45,17 @@ namespace NetworkRestart
         public static List<string> GetComputers()
         {
             var response = GetJsonData();
-            List<string> ComputerNames = new List<string>();
-
-            DirectoryEntry entry = new DirectoryEntry("LDAP://Wyndmoorals.local/" + response.ServerConfiguration.rootOUdistinguishedName);
-            entry.Username = "c2itadmin@wyndmooralf.com";
-            entry.Password = "jJRtMRAHOI@167h";
+            List<string> ComputerNames = new List<string>();           
+            OUpath = response.ServerConfiguration.rootOUdistinguishedName;
+            //Connect to active directory and filter results
+            DirectoryEntry entry = new DirectoryEntry(OUpath);
+            entry.Username = response.ServerConfiguration.domainAdminUserName;
+            entry.Password = response.ServerConfiguration.domainAdminPassword;
             DirectorySearcher mySearcher = new DirectorySearcher(entry);
+            if (response.ServerConfiguration.includeSubfolders == false)
+            {
+                mySearcher.SearchScope = System.DirectoryServices.SearchScope.OneLevel;
+            }
             mySearcher.Filter = ("(objectClass=computer)");
             mySearcher.SizeLimit = int.MaxValue;
             mySearcher.PageSize = int.MaxValue;
@@ -55,6 +71,7 @@ namespace NetworkRestart
             mySearcher.Dispose();
             entry.Dispose();
 
+            //remove computers in ignore list
             foreach (var i in ComputerNames.ToArray())
             {
                 if (response.computersToIgnore.Contains(i))
@@ -66,60 +83,122 @@ namespace NetworkRestart
             return ComputerNames;
         }
 
-        public static void RestartComputers()
+        public static void ActionComputers()
         {
             ManagementObjectCollection instances;
             List<string> ComputerNames = GetComputers();
-            StreamWriter log;
             var response = GetJsonData();
 
-            log = File.AppendText("C:\\Users\\Carr O'Connor\\Desktop\\logfile.txt");
-            log.WriteLine("TIMESTAMP :" + DateTime.Now);
-            log.WriteLine("ACTION TAKEN :" + response.Action.action);
+            //Create log file
+            using (StreamWriter log = new StreamWriter(fileName))
+            {
+                log.WriteLine("TIMESTAMP :" + DateTime.Now);
+                log.WriteLine("ACTION TAKEN :" + response.Action.action);
 
-            foreach (var i in ComputerNames)
+                foreach (var i in ComputerNames)
+                {
+                    try
+                    {
+                        //Connecting to individual machines with config credentials
+                        ConnectionOptions options = new ConnectionOptions();
+                        options.Authority = "ntlmdomain:" + response.ServerConfiguration.domain;
+                        options.Username = response.ServerConfiguration.domainAdminUserName;
+                        options.Password = response.ServerConfiguration.domainAdminPassword;
+                        options.EnablePrivileges = true;
+
+                        ManagementScope scope = new ManagementScope("\\\\" + i + "\\root\\CIMV2", options);
+                        scope.Connect();
+
+                        ManagementPath osPath = new ManagementPath("Win32_OperatingSystem");
+                        ManagementClass os = new ManagementClass(scope, osPath, null);
+                        instances = os.GetInstances();
+                    }
+
+                    catch (Exception e)
+                    {
+                        hasError = true;
+                        Console.WriteLine(i + e);
+                        log.WriteLine(i + e);
+                        continue;
+                    }
+                     
+
+                    foreach (ManagementObject instance in instances)
+                    {
+                        ManagementBaseObject inParams = instance.GetMethodParameters("Win32Shutdown");
+                        inParams["Flags"] = 0;
+                        if (response.Action.action.ToLower() == "logoff")
+                        {
+                            try
+                            {
+                                //logoff action using WMI
+                                object result = instance.InvokeMethod("Win32Shutdown", inParams, null);
+                                Console.WriteLine("Successful logoff attempt on " + i);
+                                log.WriteLine("Successful logoff attempt on " + i);
+                            }
+                            catch (Exception)
+                            {
+                                Console.WriteLine("Unsuccessful logoff attempt on " + i);
+                                log.WriteLine("Unsuccessful logoff attempt on " + i);
+                                continue;
+                            }
+
+                        }
+                        else
+                        {
+                            //Every other action using WMI
+                            object result = instance.InvokeMethod(response.Action.action , new object[] { });
+
+                            uint returnValue = (uint)result;
+
+                            if (returnValue != 0)
+                            {
+                                hasError = true;
+                                Console.WriteLine("Action NOT taken on " + i);
+                                log.WriteLine("Action NOT taken on " + i);
+                            }
+                            else
+                            {
+                                Console.WriteLine("Action taken on " + i);
+                                log.WriteLine("Action taken on " + i);
+                            }
+                        }                       
+                    }
+                }
+            }
+            if (hasError == true)
             {
                 try
                 {
-                    ConnectionOptions options = new ConnectionOptions();
-                    options.Authority = "ntlmdomain:WYNDMOORALS.LOCAL";
-                    options.Username = "c2itadmin";
-                    options.Password = "jJRtMRAHOI@167h";
-                    options.EnablePrivileges = true;
-
-                    ManagementScope scope = new ManagementScope("\\\\" + i + "\\root\\CIMV2", options);
-                    scope.Connect();
-
-                    ManagementPath osPath = new ManagementPath("Win32_OperatingSystem");
-                    ManagementClass os = new ManagementClass(scope, osPath, null);
-                    instances = os.GetInstances();
-                }
-
-                catch (Exception e)
-                {
-                    log.WriteLine(i + e);
-                    continue;
-                }
-
-                foreach (ManagementObject instance in instances)
-                {
-                    Console.WriteLine("hit computer " + instance);
-                    log.WriteLine("Action taken on " + instance);
-
-                    object result = instance.InvokeMethod("Reboot", new object[] { });
-                    uint returnValue = (uint)result;
-
-                    if (returnValue != 0)
+                    //Send email if errors were found
+                    MailMessage mail = new MailMessage();
+                    SmtpClient SmtpServer = new SmtpClient(response.EmailConfiguration.Server);
+                    SmtpServer.UseDefaultCredentials = true;
+                    string str = string.Empty;
+                    foreach (var item in response.EmailConfiguration.toAddresses)
                     {
-                        log.WriteLine("Action NOT taken on " + instance);
-                        Console.WriteLine("Did not restart");
-                        log.WriteLine();
+                        mail.To.Add(item);
                     }
-                }
 
-                // Close the stream:
+                    mail.From = new MailAddress(response.EmailConfiguration.fromAddress);
+                    mail.Subject = "LogFile" + DateTime.Now;
+                    mail.Body = "attached log file";
+
+                    System.Net.Mail.Attachment attachment;
+                    attachment = new System.Net.Mail.Attachment(fileName);
+                    mail.Attachments.Add(attachment);
+
+                    SmtpServer.Port = response.EmailConfiguration.Port;
+                    SmtpServer.Credentials = new System.Net.NetworkCredential(response.EmailConfiguration.userName, response.EmailConfiguration.password);
+                    SmtpServer.EnableSsl = true;
+
+                    SmtpServer.Send(mail);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.ToString());
+                }
             }
-            log.Close();
         }
     }
 }

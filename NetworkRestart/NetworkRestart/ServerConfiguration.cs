@@ -12,6 +12,6 @@ namespace NetworkRestart
         public string domainAdminUserName { get; set; }
         public string domainAdminPassword { get; set; }
         public string rootOUdistinguishedName { get; set; }
-        public string includeSubfolders { get; set; }
+        public bool includeSubfolders { get; set; }
     }
 }

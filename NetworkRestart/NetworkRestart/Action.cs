@@ -9,7 +9,5 @@ namespace NetworkRestart
     public class Action
     {
         public string action { get; set; }
-        public string installUpdates { get; set; }
-        public string forceAction { get; set; }
     }
 }
