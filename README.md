@@ -15,26 +15,29 @@ Here is a sample config file.
 ```
 {
   "Action": {
-    "action": "Shutdown",
+    "action": "restart",
+    "installUpdates": "true",
+    "forceAction": "true"
   },
   "ServerConfiguration": {
-    "domain": "wyndmoorals.local",
-    "domainAdminUserName": "c2itadmin@wyndmooralf.com",
-    "domainAdminPassword": "jJRtMRAHOI@167h",
-    "rootOUdistinguishedName": "LDAP://Wyndmoorals.local/OU=C2IT,OU=Computers,OU=Production,DC=wyndmoorals,DC=local",
-    "includeSubfolders": true
+    "domain": "xxxx.local",
+    "domainAdminUserName": "xxxx@xxxx.com",
+    "domainAdminPassword": "xxxx",
+    "rootOUdistinguishedName": "OU=xxxx,OU=Computers,OU=Production,DC=xxxx,DC=local",
+    "includeSubfolders": "true"
   },
   "computersToIgnore": [
-    "WYND-SPAR0001",
-    "WYND-SPAR0002"
+    "xxxx-SPAR0001",
+    "xxxx-SPAR0002"
   ],
   "EmailConfiguration": {
-    "Server": "smtp.mandrillapp.com",
-    "Port": 587,
-    "userName": "chetcromer@c2itconsulting.net",
-    "password": "Hd0nPDdoNHq6BvLk3cP0aw",
-    "fromAddress": "noreply@c2itconsulting.net",
-    "toAddresses": ["chetcromer@c2itconsulting.net","carroconnor@c2itconsulting.net"]
+    "Server": "xxx",
+    "Port": 2525,
+    "userName": "xxxx@xxxx.net",
+    "password": "xxxx",
+    "fromAddress": "noreply@xxxx.net",
+    "toAddresses": ["xxxx@xxxx.net","xxxx@xxxx;net"],
+    "sendErrorsOnly": false
   }
 }
 ```
