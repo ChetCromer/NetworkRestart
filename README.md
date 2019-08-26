@@ -41,4 +41,4 @@ Please read [CONTRIBUTING.md](https://gist.github.com/PurpleBooth/b24679402957c6
 
 ## Acknowledgments
 
-* We thought this could be a useful tool for other trying to accomplish similar goals with automation of task through an active directory. We hope this helps future devs. Thank You. 
+* We thought this could be a useful tool for others trying to accomplish similar goals with automation of tasks through an active directory. We hope this helps future devs. Thank You. 
