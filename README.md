@@ -61,10 +61,6 @@ How-To: Use ClickOnce to deploy your Applications - https://weblogs.asp.net/shah
 * .NET Framework 4.6.1
 * Console Application
 
-## Contributing
-
-Please read [CONTRIBUTING.md](https://gist.github.com/PurpleBooth/b24679402957c63ec426) for details on our code of conduct, and the process for submitting pull requests to us.
-
 ## Authors
 
 * **Chet  Cromer** - President, CEO, Lead Developer at C2IT Consulting, Inc
