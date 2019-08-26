@@ -10,6 +10,34 @@ See deployment for notes on how to deploy the project on a live system.
 ### Prerequisites
 
 Json configuration file used for providing correct data to application. 
+Here is a sample config file. 
+
+```
+{
+  "Action": {
+    "action": "Shutdown",
+  },
+  "ServerConfiguration": {
+    "domain": "wyndmoorals.local",
+    "domainAdminUserName": "c2itadmin@wyndmooralf.com",
+    "domainAdminPassword": "jJRtMRAHOI@167h",
+    "rootOUdistinguishedName": "LDAP://Wyndmoorals.local/OU=C2IT,OU=Computers,OU=Production,DC=wyndmoorals,DC=local",
+    "includeSubfolders": true
+  },
+  "computersToIgnore": [
+    "WYND-SPAR0001",
+    "WYND-SPAR0002"
+  ],
+  "EmailConfiguration": {
+    "Server": "smtp.mandrillapp.com",
+    "Port": 587,
+    "userName": "chetcromer@c2itconsulting.net",
+    "password": "Hd0nPDdoNHq6BvLk3cP0aw",
+    "fromAddress": "noreply@c2itconsulting.net",
+    "toAddresses": ["chetcromer@c2itconsulting.net","carroconnor@c2itconsulting.net"]
+  }
+}
+```
 
 ### Installing
 
