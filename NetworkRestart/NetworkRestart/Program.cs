@@ -14,7 +14,7 @@ namespace NetworkRestart
     {
         static string configFilePath;
         Program program = new Program();
-        static string fileName = "logfile.txt";
+        static string fileName;
         static string OUpath;
         static bool hasError = false;
 
@@ -90,6 +90,7 @@ namespace NetworkRestart
             var response = GetJsonData();
 
             //Create log file
+            fileName = $"LogFile_{response.Action.action}.txt";
             using (StreamWriter log = new StreamWriter(fileName))
             {
                 log.WriteLine("TIMESTAMP :" + DateTime.Now);
@@ -117,8 +118,8 @@ namespace NetworkRestart
                     catch (Exception e)
                     {
                         hasError = true;
-                        Console.WriteLine(i + e);
-                        log.WriteLine(i + e);
+                        Console.WriteLine($"Exception on {i}: {e.Message}");
+                        log.WriteLine($"Exception on {i}: {e.Message}");
                         continue;
                     }
                      
